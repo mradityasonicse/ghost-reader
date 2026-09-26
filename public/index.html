@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#202c33">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ghost WA">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
+    <title>WhatsApp Web — Ghost Reader (Zero Blue Ticks)</title>
+    <style>
+        :root {
+            --app-bg: #0c1317;
+            --sidebar-bg: #111b21;
+            --header-bg: #202c33;
+            --chat-bg: #0b141a;
+            --search-bg: #111b21;
+            --input-bg: #202c33;
+            --active-chat: #2a3942;
+            --hover-chat: #202c33;
+            --border-color: rgba(134, 150, 160, 0.15);
+            --bubble-incoming: #202c33;
+            --bubble-outgoing: #005c4b;
+            --text-primary: #e9edef;
+            --text-secondary: #8696a0;
+            --text-muted: #667781;
+            --accent-green: #00a884;
+            --accent-green-hover: #02906f;
+            --accent-green-rgb: 0, 168, 132;
+            --unread-badge: #00a884;
+            --unread-text: #111b21;
+            --icon-default: #aebac1;
+            --icon-hover: #e9edef;
+            --tick-grey: #8696a0;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--app-bg);
+            color: var(--text-primary);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            user-select: none;
+        }
+
+        /* Top Green Accent Bar (WhatsApp signature) */
+        .top-stripe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 127px;
+            background-color: #00a884;
+            z-index: 0;
+            display: none; /* Full height dark mode */
+        }
+
+        /* App Wrapper */
+        #app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            position: relative;
+            background: var(--sidebar-bg);
+        }
+
+        /* ================= QR VIEW ================= */
+        #qr-view {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #111b21;
+            padding: 20px;
+        }
+
+        .qr-box {
+            background: #202c33;
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        .qr-ghost-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 168, 132, 0.15);
+            color: var(--accent-green);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid var(--accent-green);
+        }
+
+        .qr-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .qr-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .qr-img-frame {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            width: 260px;
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .qr-img-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 30%;
+            min-width: 360px;
+            max-width: 480px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .sidebar-header {
+            height: 60px;
+            background: var(--header-bg);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar-wrap {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #005c4b;
+            color: #e9edef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .ghost-indicator-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-green);
+            border: 2px solid var(--header-bg);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--accent-green);
+        }
+
+        .user-status-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-status-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-status-sub {
+            font-size: 12px;
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--icon-default);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            color: var(--icon-hover);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Search & Filter Section */
+        .sidebar-search-area {
+            background: var(--sidebar-bg);
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input-box {
+            background: var(--input-bg);
+            border-radius: 8px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 36px;
+        }
+
+        .search-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-secondary);
+        }
+
+        .search-input-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .search-input-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .clear-search-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: none;
+            font-size: 16px;
+        }
+
+        /* Filter Pills */
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+        }
+        .filter-pills::-webkit-scrollbar { display: none; }
+
+        .filter-pill {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: none;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+
+        .filter-pill:hover {
+            background: #283740;
+            color: var(--text-primary);
+        }
+
+        .filter-pill.active {
+            background: rgba(0, 168, 132, 0.2);
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Chat List */
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            background: var(--sidebar-bg);
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            height: 72px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: var(--hover-chat);
+        }
+
+        .chat-item.active {
+            background: var(--active-chat);
+        }
+
+        .chat-avatar-wrap {
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar {
+            width: 49px;
+            height: 49px;
+            border-radius: 50%;
+            background: #3b4a54;
+            color: #dfe5e7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 17px;
+            text-transform: uppercase;
+        }
+
+        .chat-avatar.group {
+            background: #1f3640;
+            color: var(--accent-green);
+        }
+
+        .chat-details {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-item:last-child .chat-details {
+            border-bottom: none;
+        }
+
+        .chat-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 3px;
+        }
+
+        .chat-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-timestamp {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .chat-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-last-msg {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chat-unread-badge {
+            background: var(--unread-badge);
+            color: var(--unread-text);
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ================= MAIN CHAT AREA ================= */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--chat-bg);
+            height: 100%;
+            position: relative;
+            border-left: 1px solid var(--border-color);
+        }
+
+        /* No Chat Selected Welcome Screen */
+        .no-chat-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            background: var(--header-bg);
+            border-bottom: 6px solid var(--accent-green);
+        }
+
+        .no-chat-screen svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 24px;
+            opacity: 0.8;
+        }
+
+        .no-chat-title {
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .no-chat-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .no-chat-encryption {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        .no-chat-encryption svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            margin-bottom: 0;
+            opacity: 1;
+        }
+
+        /* Active Chat Workspace */
+        #active-chat-wrapper {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Chat Header */
+        .active-chat-header {
+            height: 60px;
+            background: var(--header-bg);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 5;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .active-contact-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+        }
+
+        .active-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2a3942;
+            color: #dfe5e7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        .active-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .active-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .active-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .active-subtitle span.ghost-shield {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .active-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-history-sync {
+            background: #182229;
+            border: 1px solid var(--border-color);
+            color: var(--accent-green);
+            font-size: 12.5px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-history-sync:hover {
+            background: #222e35;
+            border-color: var(--accent-green);
+        }
+
+        /* Message Stream with Authentic WhatsApp Doodle Wallpaper */
+        .chat-messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background-color: #0b141a;
+            background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.035'%3E%3Cpath d='M75 50a12 12 0 1 0 0-24 12 12 0 0 0 0 24zm-6-16h12v8H69v-8zm230 40c-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12-5.4-12-12-12zm-4 8h8v8h-8v-8zm-150 70c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm-28 0c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8-8-3.6-8-8zm240 60c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16zm-10 12h20v8h-20v-8zm-220 70c0-8.8-7.2-16-16-16s-16 7.2-16 16 7.2 16 16 16 16-7.2 16-16zm-10 0a6 6 0 1 1-12 0 6 6 0 0 1 12 0zm140 30c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm-12 16h24v8h-24v-8zm130-100c-7.7 0-14 6.3-14 14s6.3 14 14 14 14-6.3 14-14-6.3-14-14-14zm-8 10h16v8h-16v-8zm-260-150c-6.6 0-12 5.4-12 12s5.4 12 12 12 12-5.4 12-12-5.4-12-12-12zm220-40c0-10-8-18-18-18s-18 8-18 18 8 18 18 18 18-8 18-18z'/%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: repeat;
+            scroll-behavior: smooth;
+        }
+
+        /* Date Badges & Ghost Banner */
+        .date-badge {
+            align-self: center;
+            background: #182229;
+            color: #8696a0;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 7.5px;
+            margin: 12px 0 8px 0;
+            box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .ghost-privacy-card {
+            align-self: center;
+            background: #182229;
+            border: 1px solid rgba(0, 168, 132, 0.2);
+            color: #8696a0;
+            font-size: 12.5px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            max-width: 650px;
+        }
+
+        .ghost-privacy-card span {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .load-more-btn {
+            align-self: center;
+            background: #202c33;
+            color: #53bdeb;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .load-more-btn:hover {
+            background: #2a3942;
+            border-color: #53bdeb;
+        }
+
+        /* WhatsApp Speech Bubbles */
+        .bubble-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 3px;
+            position: relative;
+        }
+
+        .bubble-row.incoming {
+            justify-content: flex-start;
+        }
+
+        .bubble-row.outgoing {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 65%;
+            min-width: 90px;
+            padding: 6px 9px 8px 9px;
+            border-radius: 7.5px;
+            font-size: 14.2px;
+            line-height: 19px;
+            position: relative;
+            word-wrap: break-word;
+            box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+        }
+
+        .bubble-row.incoming .message-bubble {
+            background: var(--bubble-incoming);
+            color: var(--text-primary);
+            border-top-left-radius: 0;
+        }
+
+        .bubble-row.outgoing .message-bubble {
+            background: var(--bubble-outgoing);
+            color: var(--text-primary);
+            border-top-right-radius: 0;
+        }
+
+        /* Bubble Tails */
+        .bubble-tail {
+            position: absolute;
+            top: 0;
+            width: 8px;
+            height: 13px;
+        }
+
+        .bubble-row.incoming .bubble-tail {
+            left: -8px;
+        }
+
+        .bubble-row.outgoing .bubble-tail {
+            right: -8px;
+        }
+
+        .msg-sender-name {
+            font-size: 12.8px;
+            font-weight: 600;
+            color: #53bdeb;
+            margin-bottom: 4px;
+        }
+
+        .msg-text-content {
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        /* Anti-Delete Message Badges */
+        .msg-deleted-alert {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(234, 67, 53, 0.18);
+            border: 1px solid rgba(234, 67, 53, 0.45);
+            color: #ff6b6b;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            user-select: none;
+            letter-spacing: 0.2px;
+        }
+
+        .msg-deleted-alert svg {
+            flex-shrink: 0;
+            fill: #ff6b6b;
+        }
+
+        .bubble-deleted {
+            border: 1px solid rgba(234, 67, 53, 0.35) !important;
+            box-shadow: 0 1px 4px rgba(234, 67, 53, 0.15) !important;
+        }
+
+        .msg-meta-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            float: right;
+            margin-left: 12px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            height: 15px;
+        }
+
+        .msg-meta-row svg {
+            width: 16px;
+            height: 11px;
+            fill: var(--tick-grey);
+        }
+
+        /* ================= MEDIA RENDERING ================= */
+        .media-container {
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        /* Photo Message */
+        .photo-card-wrap {
+            max-width: 330px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #111b21;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .photo-card-wrap img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            display: block;
+            border-radius: 6px;
+            transition: transform 0.2s ease;
+        }
+
+        .photo-card-wrap:hover img {
+            filter: brightness(0.95);
+        }
+
+        /* Photo Not Downloaded Card */
+        .media-download-placeholder {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            min-width: 240px;
+            max-width: 320px;
+        }
+
+        .media-download-placeholder .placeholder-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(0, 168, 132, 0.2);
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .media-download-placeholder .placeholder-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .btn-download-media {
+            background: var(--accent-green);
+            color: #111b21;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-download-media:hover {
+            background: var(--accent-green-hover);
+            transform: scale(1.02);
+        }
+
+        /* Video Message */
+        .video-card-wrap {
+            max-width: 330px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-card-wrap video {
+            width: 100%;
+            max-height: 380px;
+            display: block;
+            border-radius: 6px;
+        }
+
+        /* Audio / Voice Note Message (Authentic WhatsApp Waveform Player) */
+        .audio-player-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 4px;
+            min-width: 260px;
+        }
+
+        .audio-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #2a3942;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-green);
+            font-size: 16px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .audio-avatar .mic-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: var(--accent-green);
+            color: #111b21;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+        }
+
+        .btn-audio-play {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            border: none;
+            color: #111b21;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.15s;
+        }
+
+        .btn-audio-play:hover {
+            transform: scale(1.06);
+        }
+
+        .btn-audio-play svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .audio-wave-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .audio-wave-bars {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 2px;
+            transition: height 0.1s, background 0.1s;
+        }
+
+        .wave-bar.played {
+            background: var(--accent-green);
+        }
+
+        .audio-time-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Document Message */
+        .doc-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 12px;
+            border-radius: 6px;
+            min-width: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .doc-icon-wrap {
+            width: 38px;
+            height: 44px;
+            background: #d33c30;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .doc-icon-wrap.word { background: #2b579a; }
+        .doc-icon-wrap.excel { background: #217346; }
+        .doc-icon-wrap.generic { background: #53bdeb; }
+
+        .doc-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-filename {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .btn-doc-download {
+            color: var(--accent-green);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-doc-download svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* ================= CHAT INPUT FOOTER ================= */
+        .chat-input-bar {
+            height: 62px;
+            background: var(--header-bg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+
+        .chat-input-pill {
+            flex: 1;
+            background: #2a3942;
+            border-radius: 8px;
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .chat-input-pill span {
+            color: var(--accent-green);
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        /* Scroll to bottom button */
+        .scroll-down-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 24px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--header-bg);
+            border: 1px solid var(--border-color);
+            color: var(--icon-default);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 10;
+            transition: all 0.2s;
+        }
+
+        .scroll-down-btn:hover {
+            color: var(--icon-hover);
+            background: var(--hover-chat);
+            transform: scale(1.05);
+        }
+
+        .scroll-down-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* ================= FULLSCREEN LIGHTBOX MODAL ================= */
+        #lightbox-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 20, 26, 0.96);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .lightbox-header {
+            height: 60px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .lightbox-title-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lightbox-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .lightbox-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .lightbox-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .lightbox-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            cursor: zoom-out;
+        }
+
+        .lightbox-body img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            object-fit: contain;
+            cursor: default;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Multi-Tenant Session Bar */
+        .session-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: #182229;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+            z-index: 10;
+        }
+        .session-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background: #202c33;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        .session-pill:hover {
+            border-color: var(--accent-green);
+            background: #2a3942;
+        }
+        .session-status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #eab308;
+            transition: background 0.3s;
+        }
+        .session-status-dot.connected {
+            background: #00a884;
+            box-shadow: 0 0 8px rgba(0,168,132,0.8);
+        }
+        .session-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .session-quick-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .icon-btn-sm {
+            background: #202c33;
+            border: 1px solid var(--border-color);
+            color: var(--icon-default);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icon-btn-sm:hover {
+            color: var(--icon-hover);
+            background: #2a3942;
+            border-color: var(--accent-green);
+        }
+        .qr-session-switch-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 460px;
+            margin-bottom: 16px;
+        }
+        .btn-create-session-inline {
+            background: rgba(0, 168, 132, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-create-session-inline:hover {
+            background: var(--accent-green);
+            color: #111b21;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 20, 26, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #202c33;
+            border-radius: 16px;
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            padding: 16px 20px;
+            background: #182229;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--icon-default);
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-close-btn:hover {
+            color: var(--icon-hover);
+        }
+        .modal-body {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .session-card-item {
+            background: #111b21;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .session-card-item:hover, .session-card-item.active {
+            border-color: var(--accent-green);
+            background: #182229;
+        }
+        .session-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .session-card-name {
+            font-weight: 600;
+            font-size: 14.5px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .session-card-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .session-input-group {
+            margin-bottom: 16px;
+        }
+        .session-input-label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .session-text-input {
+            width: 100%;
+            background: #111b21;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .session-text-input:focus {
+            border-color: var(--accent-green);
+        }
+        .btn-primary-ghost {
+            background: var(--accent-green);
+            color: #111b21;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 18px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-primary-ghost:hover {
+            background: var(--accent-green-hover);
+        }
+        .toast-popup {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00a884;
+            color: #111b21;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            z-index: 3000;
+            display: none;
+            animation: toastPop 0.2s ease;
+        }
+        @keyframes toastPop {
+            from { opacity: 0; transform: translate(-50%, 10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* PWA Install Button */
+        .btn-install-pwa {
+            background: rgba(0, 168, 132, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .btn-install-pwa:hover {
+            background: var(--accent-green);
+            color: #111b21;
+        }
+
+        /* Mobile Back Button */
+        .mobile-back-btn {
+            display: none;
+        }
+
+        /* ================= MOBILE RESPONSIVE ENGINE ================= */
+        @media (max-width: 768px) {
+            body {
+                height: 100dvh;
+                width: 100vw;
+            }
+
+            #app-container {
+                width: 100vw !important;
+                height: 100dvh !important;
+                position: fixed;
+                inset: 0;
+            }
+
+            #sidebar-panel {
+                width: 100vw !important;
+                min-width: 100vw !important;
+                max-width: 100vw !important;
+                flex: 1 1 100% !important;
+                display: flex !important;
+                height: 100dvh !important;
+                border-right: none !important;
+            }
+
+            #chat-main-area {
+                display: none !important;
+                width: 100vw !important;
+                min-width: 100vw !important;
+                max-width: 100vw !important;
+                flex: 1 1 100% !important;
+                height: 100dvh !important;
+            }
+
+            /* When Chat is Active on Mobile */
+            body.chat-open #sidebar-panel {
+                display: none !important;
+            }
+
+            body.chat-open #chat-main-area {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .mobile-back-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                border: none;
+                color: var(--icon-default);
+                padding: 6px;
+                margin-right: 6px;
+                cursor: pointer;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .mobile-back-btn:active {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+
+            .active-chat-header {
+                padding: 8px 10px;
+                gap: 6px;
+            }
+
+            .active-contact-info {
+                gap: 8px;
+            }
+
+            .active-name {
+                font-size: 14.5px;
+                max-width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .active-subtitle {
+                font-size: 11px;
+            }
+
+            .btn-history-sync {
+                padding: 5px 8px;
+                font-size: 11px;
+                gap: 4px;
+            }
+
+            .chat-messages-container {
+                padding: 12px 10px;
+            }
+
+            .msg-bubble {
+                max-width: 88% !important;
+            }
+
+            .chat-input-bar {
+                padding: 6px 8px;
+                height: 56px;
+            }
+
+            .chat-input-pill {
+                font-size: 11.5px;
+                padding: 8px 12px;
+            }
+
+            /* QR View on Mobile */
+            #qr-view {
+                padding: 12px;
+                height: 100dvh;
+                overflow-y: auto;
+            }
+
+            .qr-box {
+                padding: 24px 16px;
+                border-radius: 12px;
+                max-width: 100%;
+            }
+
+            .qr-img-frame {
+                width: 240px;
+                height: 240px;
+            }
+
+            .qr-session-switch-bar {
+                max-width: 100%;
+                gap: 8px;
+            }
+
+            /* Modals on Mobile */
+            .modal-content {
+                max-width: 95vw !important;
+                border-radius: 12px !important;
+                max-height: 85vh !important;
+            }
+        }
+
+        /* ================= AUTHENTICATION PORTAL ================= */
+        #auth-portal-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, rgba(0, 168, 132, 0.15) 0%, rgba(12, 19, 23, 0.98) 70%), #0c1317;
+            backdrop-filter: blur(20px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #182229;
+            border: 1px solid rgba(0, 168, 132, 0.35);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(0, 168, 132, 0.15);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            animation: authPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes authPop {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .auth-card-header {
+            padding: 28px 24px 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0, 168, 132, 0.1) 0%, rgba(24, 34, 41, 0) 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-logo-wrap {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+            background: rgba(0, 168, 132, 0.15);
+            border: 1px solid var(--accent-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 25px rgba(0, 168, 132, 0.4);
+        }
+
+        .auth-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .auth-subtitle {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #111b21;
+            padding: 4px;
+            margin: 16px 24px 0;
+            border-radius: 10px;
+            gap: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-tab-btn.active {
+            background: var(--accent-green);
+            color: #111b21;
+            box-shadow: 0 2px 8px rgba(0, 168, 132, 0.3);
+        }
+
+        .auth-card-body {
+            padding: 24px;
+        }
+
+        .auth-error-alert {
+            display: none;
+            background: rgba(234, 67, 53, 0.15);
+            border: 1px solid rgba(234, 67, 53, 0.4);
+            color: #ff6b6b;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .auth-input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .auth-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-input {
+            width: 100%;
+            background: #111b21;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 11px 40px 11px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .auth-input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.15);
+        }
+
+        .auth-toggle-pwd {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--icon-default);
+            cursor: pointer;
+            font-size: 15px;
+            padding: 4px;
+        }
+
+        .auth-submit-btn {
+            width: 100%;
+            background: var(--accent-green);
+            color: #111b21;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            margin-top: 8px;
+            box-shadow: 0 4px 15px rgba(0, 168, 132, 0.25);
+        }
+
+        .auth-submit-btn:hover {
+            background: var(--accent-green-hover);
+            transform: translateY(-1px);
+        }
+
+        .auth-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-footer-text {
+            text-align: center;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 18px;
+        }
+
+        /* User Profile Pill in Sidebar */
+        .user-auth-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #111b21;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 4px 8px 4px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-auth-pill .role-badge {
+            font-size: 9.5px;
+            text-transform: uppercase;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: rgba(0, 168, 132, 0.2);
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-stripe"></div>
+
+    <!-- ================= AUTHENTICATION PORTAL ================= -->
+    <div id="auth-portal-overlay">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-logo-wrap">👻</div>
+                <h1 class="auth-title" id="auth-title">WhatsApp Ghost Portal</h1>
+                <p class="auth-subtitle" id="auth-subtitle">Encrypted stealth client • Zero seen receipts</p>
+                <div class="auth-tabs" id="auth-tabs-row">
+                    <button type="button" class="auth-tab-btn active" id="auth-tab-login" onclick="switchAuthTab('login')">Sign In</button>
+                    <button type="button" class="auth-tab-btn" id="auth-tab-register" onclick="switchAuthTab('register')">Create Account</button>
+                </div>
+            </div>
+
+            <div class="auth-card-body">
+                <div class="auth-error-alert" id="auth-error-alert"></div>
+
+                <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+                    <div class="auth-input-group" id="auth-group-name" style="display: none;">
+                        <label class="auth-label">Your Full Name</label>
+                        <div class="auth-input-wrap">
+                            <input type="text" id="auth-input-name" class="auth-input" placeholder="e.g. Rahul Sharma" autocomplete="name">
+                        </div>
+                    </div>
+
+                    <div class="auth-input-group">
+                        <label class="auth-label">Username</label>
+                        <div class="auth-input-wrap">
+                            <input type="text" id="auth-input-username" class="auth-input" placeholder="Enter username..." required autocomplete="username" autocapitalize="none">
+                        </div>
+                    </div>
+
+                    <div class="auth-input-group">
+                        <label class="auth-label">Password</label>
+                        <div class="auth-input-wrap">
+                            <input type="password" id="auth-input-password" class="auth-input" placeholder="Enter password..." required autocomplete="current-password">
+                            <button type="button" class="auth-toggle-pwd" onclick="togglePasswordVisibility()" title="Show/Hide Password">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="auth-input-group" id="auth-group-confirm-pwd" style="display: none;">
+                        <label class="auth-label">Confirm Password</label>
+                        <div class="auth-input-wrap">
+                            <input type="password" id="auth-input-confirm-pwd" class="auth-input" placeholder="Re-enter password..." autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn" id="auth-submit-btn">
+                        <span id="auth-btn-text">Sign In</span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42L16.86 11H5v2z"/></svg>
+                    </button>
+                </form>
+
+                <div class="auth-footer-text" id="auth-footer-text">
+                    🔒 Secured by PBKDF2 SHA-512 cryptographic encryption
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+
+        <!-- ================= QR VIEW ================= -->
+        <div id="qr-view">
+            <div class="qr-session-switch-bar">
+                <div class="session-pill" onclick="openSessionModal()" title="Switch WhatsApp Session">
+                    <span class="session-status-dot" id="qr-session-dot"></span>
+                    <span class="session-title" id="qr-session-title">Main WhatsApp</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="btn-install-pwa-qr" class="btn-install-pwa" onclick="installPwaApp()" style="display:none;" title="Install WhatsApp Ghost on Phone / PC">
+                        📱 Install App
+                    </button>
+                    <button class="btn-create-session-inline" onclick="openSessionModal(true)">
+                        + Connect New WhatsApp
+                    </button>
+                </div>
+            </div>
+
+            <div class="qr-box">
+                <div class="qr-ghost-badge">👻 Multi-User Ghost WhatsApp</div>
+                <h1 class="qr-title" id="qr-box-title">Scan QR with WhatsApp</h1>
+                <p class="qr-desc" id="qr-box-desc">
+                    Open WhatsApp on your phone &gt; Settings &gt; Linked Devices &gt; Link a Device.<br>
+                    Connecting session: <strong id="qr-target-session-name" style="color: var(--accent-green)">Main WhatsApp</strong>.
+                </p>
+                <div class="qr-img-frame">
+                    <img id="qr-img" src="" alt="WhatsApp QR Code" style="display: none;">
+                    <div id="qr-loading-text" style="color: #111b21; font-weight: 600;">Generating fresh QR code...</div>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; width: 100%;">
+                    <button class="btn-history-sync" style="flex: 1; justify-content: center;" onclick="copySessionShareLink()">
+                        🔗 Share Direct QR Link
+                    </button>
+                    <button class="btn-history-sync" style="flex: 1; justify-content: center;" onclick="openSessionModal()">
+                        ⇄ Switch Account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar" id="sidebar-panel">
+            <!-- Multi-Tenant Session Bar -->
+            <div class="session-bar">
+                <div class="session-pill" onclick="openSessionModal()" title="Switch WhatsApp Account">
+                    <span class="session-status-dot" id="session-dot"></span>
+                    <span class="session-title" id="session-display-name">Main WhatsApp</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <div class="session-quick-actions">
+                    <div class="user-auth-pill" id="user-auth-pill" title="Logged in user">
+                        <span id="auth-pill-username">admin</span>
+                        <span class="role-badge" id="auth-pill-role">ADMIN</span>
+                    </div>
+                    <button id="btn-install-pwa" class="btn-install-pwa" onclick="installPwaApp()" style="display:none;" title="Install WhatsApp Ghost on Phone / PC">
+                        📱 Install App
+                    </button>
+                    <button class="icon-btn-sm" onclick="copySessionShareLink()" title="Copy direct link for this session">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+                    </button>
+                    <button class="icon-btn-sm" onclick="openSessionModal(true)" title="Connect New WhatsApp">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                    <button class="icon-btn-sm" onclick="openPinModal()" title="PIN Protection (Privacy)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    </button>
+                    <button class="icon-btn-sm" onclick="handleAuthLogout()" title="Log out of Ghost Account (Lock Portal)" style="color: #ff6b6b;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="sidebar-header">
+                <div class="user-profile">
+                    <div class="user-avatar-wrap">
+                        <div class="user-avatar">👻</div>
+                        <div class="ghost-indicator-dot" title="Ghost Mode Active (Zero Blue Ticks)"></div>
+                    </div>
+                    <div class="user-status-text">
+                        <span class="user-status-title">WhatsApp Ghost</span>
+                        <span class="user-status-sub" id="header-user-status">Zero Seen • 100% Invisible</span>
+                    </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="icon-btn" onclick="fetchChats()" title="Sync all contacts & chats">
+                        <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                    </button>
+                    <button class="icon-btn" onclick="logoutSession()" title="Disconnect WhatsApp Session">
+                        <svg viewBox="0 0 24 24"><path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Box & Filter Chips -->
+            <div class="sidebar-search-area">
+                <div class="search-input-box">
+                    <div class="search-icon">
+                        <svg viewBox="0 0 24 24"><path d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.255l.221.22v.635l4.004 3.999 1.194-1.195-3.997-4.007zm-4.808 0a3.605 3.605 0 1 1 0-7.21 3.605 3.605 0 0 1 0 7.21z"/></svg>
+                    </div>
+                    <input type="text" id="search-input" placeholder="Search across 2,400+ contacts & chats..." oninput="handleSearchInput()">
+                    <button class="clear-search-btn" id="clear-search-btn" onclick="clearSearch()">✕</button>
+                </div>
+
+                <div class="filter-pills">
+                    <button class="filter-pill active" id="pill-all" onclick="setFilterTab('all')">All</button>
+                    <button class="filter-pill" id="pill-unread" onclick="setFilterTab('unread')">Unread</button>
+                    <button class="filter-pill" id="pill-personal" onclick="setFilterTab('personal')">Personal</button>
+                    <button class="filter-pill" id="pill-groups" onclick="setFilterTab('groups')">Groups</button>
+                </div>
+            </div>
+
+            <!-- Chat Threads List -->
+            <div class="chat-list" id="chat-list-el" onscroll="handleSidebarScroll()"></div>
+        </aside>
+
+        <!-- ================= MAIN CHAT AREA ================= -->
+        <main class="chat-main" id="chat-main-area">
+
+            <!-- Default Welcome Screen (When no chat is active) -->
+            <div class="no-chat-screen" id="no-chat-screen">
+                <svg viewBox="0 0 24 24" fill="#00a884">
+                    <path d="M12.004 2C6.48 2 2 6.48 2 12c0 1.82.49 3.53 1.34 5L2 22l5.17-1.31C8.61 21.48 10.26 22 12.004 22c5.52 0 10-4.48 10-10s-4.48-10-10-10zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+                </svg>
+                <h2 class="no-chat-title">WhatsApp Ghost Client</h2>
+                <p class="no-chat-subtitle">
+                    Select a conversation from the sidebar to view full message histories, high-resolution photos, playable videos, and voice notes completely invisibly.<br>
+                    Senders will always see standard double grey ticks (✓✓).
+                </p>
+                <div class="no-chat-encryption">
+                    <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    End-to-end encrypted companion session • 100% Zero-Seen Guaranteed
+                </div>
+            </div>
+
+            <!-- Active Chat Workspace -->
+            <div id="active-chat-wrapper">
+                <!-- Chat Header -->
+                <div class="active-chat-header">
+                    <button class="mobile-back-btn" onclick="closeChatMobile()" title="Back to chat list">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    </button>
+                    <div class="active-contact-info" onclick="showContactDetails()">
+                        <div class="active-avatar" id="active-avatar">?</div>
+                        <div class="active-meta">
+                            <span class="active-name" id="active-name">Contact Name</span>
+                            <span class="active-subtitle" id="active-subtitle">
+                                <span class="ghost-shield">👻 Ghost Mode</span> • Senders see double grey ticks
+                            </span>
+                        </div>
+                    </div>
+                    <div class="active-actions">
+                        <button class="btn-history-sync" id="btn-export-chat" onclick="exportCurrentChat('txt')" title="Export conversation with preserved deleted messages">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                            Export Chat
+                        </button>
+                        <button class="btn-history-sync" id="btn-fetch-older-header" onclick="requestOlderMessagesFromPhone()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            Fetch Older Messages
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Stream -->
+                <div class="chat-messages-container" id="messages-container" onscroll="handleMessagesScroll()"></div>
+
+                <!-- Scroll Down Floating Button -->
+                <button class="scroll-down-btn" id="scroll-down-btn" onclick="scrollToBottom()" title="Jump to bottom">
+                    <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </button>
+
+                <!-- Chat Footer / Input Bar -->
+                <div class="chat-input-bar">
+                    <button class="icon-btn" title="Emoji (Viewer Mode)">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    </button>
+                    <button class="icon-btn" title="Attachments (Viewer Mode)">
+                        <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3 3 0 0 0 6 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                    </button>
+                    <div class="chat-input-pill">
+                        <span>👻 Ghost Mode:</span> Read-only stealth viewer. Outgoing messages disabled to guarantee 100% invisible zero-seen security.
+                    </div>
+                    <button class="icon-btn" title="Microphone (Viewer Mode)">
+                        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= FULLSCREEN LIGHTBOX MODAL ================= -->
+    <div id="lightbox-modal" onclick="closeLightbox(event)">
+        <div class="lightbox-header">
+            <div class="lightbox-title-box">
+                <span class="lightbox-title" id="lightbox-title">Photo Preview</span>
+                <span class="lightbox-subtitle" id="lightbox-subtitle">High Resolution</span>
+            </div>
+            <div class="lightbox-controls">
+                <a id="lightbox-download-link" href="#" download="whatsapp_photo.jpg" class="icon-btn" title="Download Image">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </a>
+                <button class="icon-btn" onclick="closeLightbox()" title="Close (Esc)">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="lightbox-body" id="lightbox-body">
+            <img id="lightbox-img" src="" alt="Full view" onclick="event.stopPropagation()">
+        </div>
+    </div>
+
+    <!-- ================= SESSION MANAGER MODAL ================= -->
+    <div class="modal-overlay" id="session-modal" onclick="closeModalOnBackdrop(event, 'session-modal')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>👻</span> WhatsApp Ghost Accounts
+                </div>
+                <button class="modal-close-btn" onclick="closeSessionModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    <button id="tab-btn-active-sessions" class="filter-pill active" onclick="switchModalTab('active')">Active Sessions</button>
+                    <button id="tab-btn-new-session" class="filter-pill" onclick="switchModalTab('new')">+ Connect New WhatsApp</button>
+                </div>
+
+                <!-- Tab 1: Active Sessions List -->
+                <div id="modal-tab-active">
+                    <div id="session-list-container">
+                        <div style="text-align: center; color: var(--text-muted); padding: 20px;">Loading accounts...</div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Create New Session -->
+                <div id="modal-tab-new" style="display: none;">
+                    <div class="session-input-group">
+                        <label class="session-input-label">Session Name or Identifier</label>
+                        <input type="text" id="new-session-name" class="session-text-input" placeholder="e.g. Rahul, Office, MyPrivateWA" maxlength="25">
+                        <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px;">
+                            Each session runs its own WhatsApp Web socket and stores chats isolatedly.
+                        </div>
+                    </div>
+                    <div class="session-input-group">
+                        <label class="session-input-label">Optional Security PIN (Protects your privacy from others)</label>
+                        <input type="password" id="new-session-pin" class="session-text-input" placeholder="e.g. 1234 (Leave blank for public)" maxlength="8">
+                    </div>
+                    <button class="btn-primary-ghost" onclick="handleCreateSessionSubmit()">
+                        🚀 Initialize Session &amp; Get QR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PIN UNLOCK MODAL ================= -->
+    <div class="modal-overlay" id="pin-prompt-modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔒</span> Protected Ghost Session
+                </div>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 14px;">
+                    This session is protected with a security PIN. Enter the PIN to view chats:
+                </p>
+                <div class="session-input-group">
+                    <input type="password" id="pin-prompt-input" class="session-text-input" placeholder="Enter PIN..." maxlength="10" onkeydown="if(event.key==='Enter') submitPinPrompt()">
+                </div>
+                <button class="btn-primary-ghost" onclick="submitPinPrompt()">
+                    Unlock Ghost Session
+                </button>
+                <button class="filter-pill" style="margin-top: 10px; width: 100%; border-radius: 8px;" onclick="document.getElementById('pin-prompt-modal').style.display='none'; openSessionModal();">
+                    Choose Another Account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SET PIN MODAL ================= -->
+    <div class="modal-overlay" id="pin-set-modal" onclick="closeModalOnBackdrop(event, 'pin-set-modal')">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🛡️</span> Session PIN Security
+                </div>
+                <button class="modal-close-btn" onclick="document.getElementById('pin-set-modal').style.display='none'">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="session-input-group">
+                    <label class="session-input-label">Current PIN (if set)</label>
+                    <input type="password" id="old-pin-input" class="session-text-input" placeholder="Current PIN (blank if none)">
+                </div>
+                <div class="session-input-group">
+                    <label class="session-input-label">New PIN (Leave blank to remove PIN)</label>
+                    <input type="password" id="new-pin-input" class="session-text-input" placeholder="New PIN">
+                </div>
+                <button class="btn-primary-ghost" onclick="handleSetPinSubmit()">
+                    Save PIN Protection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-popup" id="toast-popup">Link copied to clipboard!</div>
+
+    <script>
+        // ================= USER AUTHENTICATION STATE =================
+        let currentUserToken = localStorage.getItem('ghost_auth_token') || null;
+        let currentAuthUser = null;
+        let authIsInitialized = false;
+        let currentAuthMode = 'login'; // 'login', 'register', or 'setup'
+
+        // Multi-Tenant Session State
+        let currentSessionId = new URLSearchParams(window.location.search).get('session') || localStorage.getItem('ghost_session_id') || 'default';
+        let currentSessionPin = sessionStorage.getItem('ghost_pin_' + currentSessionId) || '';
+        let currentSessionMeta = { name: 'Main WhatsApp', status: 'initializing', hasPin: false };
+
+        let ws;
+        let allChats = [];
+        let filteredChats = [];
+        let currentSelectedJid = null;
+        let currentFilterTab = 'all';
+        let sidebarRenderCount = 80;
+        let currentlyPlayingAudio = null;
+
+        // Central Authenticated API Fetch
+        async function apiFetch(url, options = {}) {
+            const opts = { ...options };
+            opts.headers = opts.headers ? { ...opts.headers } : {};
+            if (currentUserToken) {
+                opts.headers['Authorization'] = `Bearer ${currentUserToken}`;
+            }
+            opts.headers['X-Session-Id'] = currentSessionId;
+            if (currentSessionPin) {
+                opts.headers['X-Session-Pin'] = currentSessionPin;
+            }
+            const separator = url.includes('?') ? '&' : '?';
+            const reqUrl = `${url}${separator}session=${encodeURIComponent(currentSessionId)}${currentSessionPin ? `&pin=${encodeURIComponent(currentSessionPin)}` : ''}`;
+
+            const res = await fetch(reqUrl, opts);
+            if (res.status === 401) {
+                const clone = res.clone();
+                const data = await clone.json().catch(() => ({}));
+                if (data.error === 'AUTH_REQUIRED' || data.error === 'INVALID_TOKEN') {
+                    showAuthModal('Your session has expired. Please sign in again.');
+                    throw new Error('AUTH_REQUIRED');
+                }
+                if (data.error === 'PIN_REQUIRED') {
+                    showPinPrompt();
+                    throw new Error('PIN_REQUIRED');
+                }
+            }
+            return res;
+        }
+
+        // DOM Elements
+        const qrView = document.getElementById('qr-view');
+        const qrImg = document.getElementById('qr-img');
+        const qrLoadingText = document.getElementById('qr-loading-text');
+        const chatListEl = document.getElementById('chat-list-el');
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+        const noChatScreen = document.getElementById('no-chat-screen');
+        const activeChatWrapper = document.getElementById('active-chat-wrapper');
+        const activeAvatar = document.getElementById('active-avatar');
+        const activeName = document.getElementById('active-name');
+        const activeSubtitle = document.getElementById('active-subtitle');
+        const messagesContainer = document.getElementById('messages-container');
+        const scrollDownBtn = document.getElementById('scroll-down-btn');
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxTitle = document.getElementById('lightbox-title');
+        const lightboxSubtitle = document.getElementById('lightbox-subtitle');
+        const lightboxDownloadLink = document.getElementById('lightbox-download-link');
+
+        // Speech tails SVG
+        const tailIncomingSVG = `<svg viewBox="0 0 8 13" width="8" height="13" class="bubble-tail"><path opacity="0.13" fill="#00000000" d="M1.533 3.568 8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z"/><path fill="#202c33" d="M1.533 2.568 8 11.193V0H2.812C1.042 0 .474 1.156 1.533 2.568z"/></svg>`;
+        const tailOutgoingSVG = `<svg viewBox="0 0 8 13" width="8" height="13" class="bubble-tail"><path opacity="0.13" fill="#00000000" d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z"/><path fill="#005c4b" d="M5.188 0H0v11.193l6.467-8.625C7.526 1.156 6.958 0 5.188 0z"/></svg>`;
+        const doubleGreyTickSVG = `<svg viewBox="0 0 16 15" width="16" height="15"><path fill="#8696a0" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/></svg>`;
+
+        // ================= Multi-Tenant Session UI Engine =================
+        function updateSessionHeader(name, status) {
+            currentSessionMeta.name = name;
+            currentSessionMeta.status = status;
+            
+            const isConn = status === 'connected';
+            const dot = document.getElementById('session-dot');
+            const qrDot = document.getElementById('qr-session-dot');
+            if (dot) dot.className = `session-status-dot ${isConn ? 'connected' : ''}`;
+            if (qrDot) qrDot.className = `session-status-dot ${isConn ? 'connected' : ''}`;
+
+            const nameEl = document.getElementById('session-display-name');
+            const qrNameEl = document.getElementById('qr-session-title');
+            const qrTargetName = document.getElementById('qr-target-session-name');
+            if (nameEl) nameEl.textContent = name;
+            if (qrNameEl) qrNameEl.textContent = name;
+            if (qrTargetName) qrTargetName.textContent = name;
+        }
+
+        async function openSessionModal(showNewTab = false) {
+            document.getElementById('session-modal').style.display = 'flex';
+            if (showNewTab) {
+                switchModalTab('new');
+            } else {
+                switchModalTab('active');
+                await loadSessionsList();
+            }
+        }
+
+        function closeSessionModal() {
+            document.getElementById('session-modal').style.display = 'none';
+        }
+
+        function switchModalTab(tab) {
+            const btnActive = document.getElementById('tab-btn-active-sessions');
+            const btnNew = document.getElementById('tab-btn-new-session');
+            const tabActive = document.getElementById('modal-tab-active');
+            const tabNew = document.getElementById('modal-tab-new');
+
+            if (tab === 'active') {
+                btnActive.classList.add('active');
+                btnNew.classList.remove('active');
+                tabActive.style.display = 'block';
+                tabNew.style.display = 'none';
+                loadSessionsList();
+            } else {
+                btnNew.classList.add('active');
+                btnActive.classList.remove('active');
+                tabNew.style.display = 'block';
+                tabActive.style.display = 'none';
+                setTimeout(() => document.getElementById('new-session-name')?.focus(), 100);
+            }
+        }
+
+        async function loadSessionsList() {
+            const container = document.getElementById('session-list-container');
+            try {
+                const res = await fetch('/api/sessions');
+                const sessions = await res.json();
+                if (!sessions.length) {
+                    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;">No accounts found. Create one!</div>`;
+                    return;
+                }
+
+                container.innerHTML = sessions.map(s => {
+                    const isActive = s.id === currentSessionId;
+                    const statusColor = s.status === 'connected' ? '#00a884' : (s.status === 'waiting_for_qr' ? '#eab308' : '#8696a0');
+                    const statusText = s.status === 'connected' ? 'Connected (Ghost)' : (s.status === 'waiting_for_qr' ? 'Needs QR Scan' : 'Offline');
+                    return `
+                        <div class="session-card-item ${isActive ? 'active' : ''}" onclick="selectSession('${s.id}', ${Boolean(s.hasPin)})">
+                            <div class="session-card-info">
+                                <div class="session-card-name">
+                                    <span style="color: ${statusColor}; font-size: 16px;">●</span>
+                                    <span>${escapeHtml(s.name || s.id)}</span>
+                                    ${s.hasPin ? '<span title="PIN Protected">🔒</span>' : ''}
+                                    ${isActive ? '<span style="font-size: 11px; background: rgba(0,168,132,0.2); color: #00a884; padding: 2px 8px; border-radius: 12px; margin-left: 6px;">ACTIVE</span>' : ''}
+                                </div>
+                                <div class="session-card-meta">
+                                    Status: ${statusText} • ${s.totalChats || 0} chats preserved
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn-create-session-inline" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); selectSession('${s.id}', ${Boolean(s.hasPin)})">
+                                    ${isActive ? 'Selected' : 'Switch'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = `<div style="color: #ea4335; text-align: center;">Error loading sessions</div>`;
+            }
+        }
+
+        async function handleCreateSessionSubmit() {
+            const nameInput = document.getElementById('new-session-name');
+            const pinInput = document.getElementById('new-session-pin');
+            const name = nameInput.value.trim();
+            const pin = pinInput.value.trim();
+
+            if (!name) {
+                alert('Please enter a session name (e.g. Rahul)');
+                return;
+            }
+
+            const id = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 32);
+
+            try {
+                const res = await fetch('/api/sessions/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, name, pin: pin || null })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    nameInput.value = '';
+                    pinInput.value = '';
+                    if (pin) {
+                        sessionStorage.setItem('ghost_pin_' + id, pin);
+                    }
+                    closeSessionModal();
+                    selectSession(id, Boolean(pin), pin);
+                } else {
+                    alert('Error creating session: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Connection error: ' + e.message);
+            }
+        }
+
+        function selectSession(id, hasPin, knownPin = null) {
+            currentSessionId = id;
+            localStorage.setItem('ghost_session_id', id);
+
+            const url = new URL(window.location);
+            url.searchParams.set('session', id);
+            window.history.replaceState(null, '', url.toString());
+
+            if (knownPin) {
+                currentSessionPin = knownPin;
+                sessionStorage.setItem('ghost_pin_' + id, knownPin);
+            } else {
+                currentSessionPin = sessionStorage.getItem('ghost_pin_' + id) || '';
+            }
+
+            closeSessionModal();
+
+            if (hasPin && !currentSessionPin) {
+                showPinPrompt();
+                return;
+            }
+
+            resetChatUI();
+            connectWebSocket();
+            fetchStatusAndChats();
+        }
+
+        function showPinPrompt() {
+            document.getElementById('pin-prompt-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('pin-prompt-input')?.focus(), 100);
+        }
+
+        async function submitPinPrompt() {
+            const input = document.getElementById('pin-prompt-input');
+            const pin = input.value.trim();
+            if (!pin) return;
+
+            try {
+                const res = await fetch('/api/sessions/verify-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentSessionId, pin })
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    currentSessionPin = pin;
+                    sessionStorage.setItem('ghost_pin_' + currentSessionId, pin);
+                    document.getElementById('pin-prompt-modal').style.display = 'none';
+                    input.value = '';
+                    resetChatUI();
+                    connectWebSocket();
+                    fetchStatusAndChats();
+                } else {
+                    alert('Incorrect PIN for this session.');
+                }
+            } catch (e) {
+                alert('Verification error: ' + e.message);
+            }
+        }
+
+        function openPinModal() {
+            document.getElementById('pin-set-modal').style.display = 'flex';
+        }
+
+        async function handleSetPinSubmit() {
+            const oldPin = document.getElementById('old-pin-input').value.trim();
+            const newPin = document.getElementById('new-pin-input').value.trim();
+
+            try {
+                const res = await fetch('/api/sessions/set-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentSessionId, oldPin, newPin })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentSessionPin = newPin;
+                    if (newPin) {
+                        sessionStorage.setItem('ghost_pin_' + currentSessionId, newPin);
+                    } else {
+                        sessionStorage.removeItem('ghost_pin_' + currentSessionId);
+                    }
+                    document.getElementById('pin-set-modal').style.display = 'none';
+                    showToast(newPin ? 'Session PIN set successfully!' : 'PIN removed');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to update PIN'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        function copySessionShareLink() {
+            const url = new URL(window.location.origin + window.location.pathname);
+            url.searchParams.set('session', currentSessionId);
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                showToast(`Direct Link for "${currentSessionMeta.name}" Copied!`);
+            }).catch(() => {
+                prompt('Copy this link:', url.toString());
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-popup');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        function closeModalOnBackdrop(e, modalId) {
+            if (e.target && e.target.id === modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+        }
+
+        function resetChatUI() {
+            allChats = [];
+            filteredChats = [];
+            currentSelectedJid = null;
+            document.getElementById('chat-list-el').innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-muted);">Loading conversation threads...</div>';
+            noChatScreen.style.display = 'flex';
+            activeChatWrapper.style.display = 'none';
+        }
+
+        async function fetchStatusAndChats() {
+            try {
+                const res = await apiFetch('/api/status');
+                const data = await res.json();
+                if (data.name) updateSessionHeader(data.name, data.status);
+                handleConnectionStatus(data.status);
+                if (data.qr) renderQr(data.qr);
+                if (data.status === 'connected') {
+                    fetchChats();
+                }
+            } catch (e) {}
+        }
+
+        // Connect WebSocket with Session routing and Auth Token
+        function connectWebSocket() {
+            if (!currentUserToken) return;
+            if (ws) {
+                try { ws.close(); } catch(e){}
+            }
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(currentUserToken)}&session=${encodeURIComponent(currentSessionId)}${currentSessionPin ? `&pin=${encodeURIComponent(currentSessionPin)}` : ''}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'error' && msg.data?.code === 'AUTH_REQUIRED') {
+                        showAuthModal('Authentication required. Please sign in.', 'login');
+                        return;
+                    }
+                    if (msg.sessionId && msg.sessionId !== currentSessionId) return;
+
+                    const { type, data } = msg;
+                    if (type === 'init') {
+                        if (data.name) updateSessionHeader(data.name, data.status);
+                        handleConnectionStatus(data.status);
+                        if (data.qr) renderQr(data.qr);
+                    } else if (type === 'qr') {
+                        renderQr(data);
+                    } else if (type === 'status') {
+                        handleConnectionStatus(data);
+                    } else if (type === 'new_message') {
+                        handleIncomingLiveMessage(data);
+                    } else if (type === 'media_ready') {
+                        handleMediaReady(data);
+                    } else if (type === 'message_deleted') {
+                        handleMessageDeleted(data);
+                    } else if (type === 'history_synced' || type === 'chat_updated') {
+                        fetchChats();
+                        if (currentSelectedJid) {
+                            fetchMessagesForCurrentChat(false);
+                        }
+                    } else if (type === 'error' && data?.code === 'PIN_REQUIRED') {
+                        showPinPrompt();
+                    }
+                } catch (e) {
+                    console.error('WebSocket parse error:', e);
+                }
+            };
+
+            ws.onclose = () => setTimeout(connectWebSocket, 3000);
+        }
+
+        function handleMessageDeleted(data) {
+            console.log('[Anti-Delete] Message deleted event for:', data.id);
+            const row = document.getElementById(`msg-row-${data.id}`);
+            if (row) {
+                const bubble = row.querySelector('.message-bubble');
+                if (bubble && !bubble.querySelector('.msg-deleted-alert')) {
+                    bubble.classList.add('bubble-deleted');
+                    const alertEl = document.createElement('div');
+                    alertEl.className = 'msg-deleted-alert';
+                    alertEl.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <span>This message was deleted by sender (Preserved by Ghost Reader)</span>
+                    `;
+                    const senderNameEl = bubble.querySelector('.msg-sender-name');
+                    if (senderNameEl) {
+                        senderNameEl.insertAdjacentElement('afterend', alertEl);
+                    } else {
+                        bubble.insertBefore(alertEl, bubble.firstChild);
+                    }
+                }
+            }
+        }
+
+        function exportCurrentChat(format = 'txt') {
+            if (!currentSelectedJid) return;
+            const exportUrl = `/api/chats/export?session=${encodeURIComponent(currentSessionId)}${currentSessionPin ? `&pin=${encodeURIComponent(currentSessionPin)}` : ''}&jid=${encodeURIComponent(currentSelectedJid)}&format=${format}`;
+            window.open(exportUrl, '_blank');
+        }
+
+        function renderQr(qrDataUrl) {
+            qrImg.src = qrDataUrl;
+            qrImg.style.display = 'block';
+            qrLoadingText.style.display = 'none';
+        }
+
+        function handleConnectionStatus(status) {
+            if (status === 'connected') {
+                qrView.style.display = 'none';
+                document.getElementById('sidebar-panel').style.display = 'flex';
+                document.getElementById('chat-main-area').style.display = 'flex';
+                fetchChats();
+            } else {
+                qrView.style.display = 'flex';
+                document.getElementById('sidebar-panel').style.display = 'none';
+                document.getElementById('chat-main-area').style.display = 'none';
+            }
+        }
+
+        // Fetch Chats
+        async function fetchChats() {
+            try {
+                const res = await apiFetch('/api/chats');
+                allChats = await res.json();
+                updateFilterPillCounts();
+                filterAndRenderChats();
+            } catch (err) {
+                console.error('Error fetching chats:', err);
+            }
+        }
+
+        function updateFilterPillCounts() {
+            const total = allChats.length;
+            const groups = allChats.filter(c => c.isGroup).length;
+            const personal = total - groups;
+            const unread = allChats.filter(c => c.unreadCount > 0).length;
+
+            document.getElementById('pill-all').textContent = `All (${total})`;
+            document.getElementById('pill-unread').textContent = unread > 0 ? `Unread (${unread})` : 'Unread';
+            document.getElementById('pill-personal').textContent = `Personal (${personal})`;
+            document.getElementById('pill-groups').textContent = `Groups (${groups})`;
+        }
+
+        function setFilterTab(tab) {
+            currentFilterTab = tab;
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                pill.classList.toggle('active', pill.id === `pill-${tab}`);
+            });
+            filterAndRenderChats();
+        }
+
+        function handleSearchInput() {
+            const query = searchInput.value.trim();
+            clearSearchBtn.style.display = query ? 'block' : 'none';
+            filterAndRenderChats();
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            filterAndRenderChats();
+        }
+
+        function filterAndRenderChats() {
+            const query = searchInput.value.toLowerCase().trim();
+
+            filteredChats = allChats.filter(chat => {
+                if (currentFilterTab === 'personal' && chat.isGroup) return false;
+                if (currentFilterTab === 'groups' && !chat.isGroup) return false;
+                if (currentFilterTab === 'unread' && (!chat.unreadCount || chat.unreadCount <= 0)) return false;
+
+                if (query) {
+                    const nameMatch = (chat.name || '').toLowerCase().includes(query);
+                    const msgMatch = (chat.lastMessage || '').toLowerCase().includes(query);
+                    const idMatch = (chat.id || '').includes(query);
+                    return nameMatch || msgMatch || idMatch;
+                }
+                return true;
+            });
+
+            sidebarRenderCount = 80;
+            renderChatListItems();
+        }
+
+        function renderChatListItems() {
+            chatListEl.innerHTML = '';
+            if (!filteredChats.length) {
+                chatListEl.innerHTML = `
+                    <div style="padding: 30px 20px; text-align: center; color: var(--text-muted); font-size: 14px;">
+                        No conversations found
+                    </div>`;
+                return;
+            }
+
+            const visibleSlice = filteredChats.slice(0, sidebarRenderCount);
+            visibleSlice.forEach(chat => {
+                const item = document.createElement('div');
+                item.className = `chat-item ${currentSelectedJid === chat.id ? 'active' : ''}`;
+                item.onclick = () => selectChat(chat);
+
+                const isGroup = chat.isGroup;
+                const initial = isGroup ? '👥' : (chat.name || 'W').charAt(0).toUpperCase();
+                const timeStr = chat.lastTimestamp ? formatSidebarTimestamp(chat.lastTimestamp) : '';
+
+                item.innerHTML = `
+                    <div class="chat-avatar-wrap">
+                        <div class="chat-avatar ${isGroup ? 'group' : ''}">${initial}</div>
+                    </div>
+                    <div class="chat-details">
+                        <div class="chat-top-row">
+                            <span class="chat-name">${escapeHtml(chat.name)}</span>
+                            <span class="chat-timestamp">${timeStr}</span>
+                        </div>
+                        <div class="chat-bottom-row">
+                            <span class="chat-last-msg">${escapeHtml(chat.lastMessage || 'Tap to read')}</span>
+                            ${chat.unreadCount > 0 ? `<span class="chat-unread-badge">${chat.unreadCount}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                chatListEl.appendChild(item);
+            });
+        }
+
+        function handleSidebarScroll() {
+            if (chatListEl.scrollTop + chatListEl.clientHeight >= chatListEl.scrollHeight - 100) {
+                if (sidebarRenderCount < filteredChats.length) {
+                    sidebarRenderCount += 50;
+                    renderChatListItems();
+                }
+            }
+        }
+
+        function formatSidebarTimestamp(ts) {
+            const date = new Date(ts);
+            const now = new Date();
+            if (date.toDateString() === now.toDateString()) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) {
+                return 'Yesterday';
+            }
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        // Select a conversation
+        async function selectChat(chat) {
+            currentSelectedJid = chat.id;
+
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+            event?.currentTarget?.classList.add('active');
+
+            // Mobile screen transition
+            document.body.classList.add('chat-open');
+            try {
+                if (!window.history.state || !window.history.state.chatOpen) {
+                    window.history.pushState({ chatOpen: true, jid: chat.id }, '');
+                }
+            } catch (_) {}
+
+            noChatScreen.style.display = 'none';
+            activeChatWrapper.style.display = 'flex';
+
+            activeName.textContent = chat.name;
+            activeAvatar.textContent = chat.isGroup ? '👥' : (chat.name || 'W').charAt(0).toUpperCase();
+            activeSubtitle.innerHTML = `
+                <span class="ghost-shield">👻 Ghost Mode</span> • ${chat.isGroup ? 'Group Chat' : 'Direct Conversation'} • Zero Blue Ticks
+            `;
+
+            await fetchMessagesForCurrentChat(true);
+
+            // If contact is Uma Sahu / "To" or has very few messages, trigger auto history fetch
+            if (chat.name.toLowerCase() === 'uma sahu' || chat.name.toLowerCase() === 'to' || (chat.messageCount && chat.messageCount < 10)) {
+                requestOlderMessagesFromPhone(false);
+            }
+        }
+
+        // Mobile return to chat list
+        function closeChatMobile() {
+            document.body.classList.remove('chat-open');
+            currentSelectedJid = null;
+            document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+            noChatScreen.style.display = 'flex';
+            activeChatWrapper.style.display = 'none';
+        }
+
+        window.addEventListener('popstate', (e) => {
+            if (document.body.classList.contains('chat-open')) {
+                closeChatMobile();
+            }
+        });
+
+        // Fetch messages for active chat
+        async function fetchMessagesForCurrentChat(scrollBottom = true) {
+            if (!currentSelectedJid) return;
+            try {
+                const res = await apiFetch(`/api/messages?jid=${encodeURIComponent(currentSelectedJid)}`);
+                const messages = await res.json();
+                renderMessageStream(messages, scrollBottom);
+            } catch (err) {
+                console.error('Error fetching messages:', err);
+            }
+        }
+
+        function renderMessageStream(messages, scrollBottom = true) {
+            messagesContainer.innerHTML = `
+                <button class="load-more-btn" onclick="requestOlderMessagesFromPhone(true)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Load Older Messages from Phone
+                </button>
+                <div class="ghost-privacy-card">
+                    👻 <span>Ghost Engine Active:</span> Reading this chat sends ZERO read receipts / blue ticks. ${messages.length} messages loaded.
+                </div>
+            `;
+
+            if (!messages.length) {
+                const empty = document.createElement('div');
+                empty.style.textAlign = 'center';
+                empty.style.color = 'var(--text-muted)';
+                empty.style.fontSize = '14px';
+                empty.style.margin = 'auto';
+                empty.textContent = 'No messages found in this chat thread.';
+                messagesContainer.appendChild(empty);
+                return;
+            }
+
+            let lastDateLabel = null;
+            messages.forEach((msg, idx) => {
+                const dateLabel = formatChatDateDivider(msg.timestamp);
+                if (dateLabel !== lastDateLabel) {
+                    const divider = document.createElement('div');
+                    divider.className = 'date-badge';
+                    divider.textContent = dateLabel;
+                    messagesContainer.appendChild(divider);
+                    lastDateLabel = dateLabel;
+                }
+
+                const prevMsg = idx > 0 ? messages[idx - 1] : null;
+                const isFirstFromSender = !prevMsg || prevMsg.fromMe !== msg.fromMe;
+                appendBubbleToStream(msg, isFirstFromSender, false);
+            });
+
+            if (scrollBottom) {
+                scrollToBottom();
+            }
+        }
+
+        function formatChatDateDivider(ts) {
+            const date = new Date(ts);
+            const now = new Date();
+            if (date.toDateString() === now.toDateString()) return 'Today';
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+            return date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        // Render single bubble
+        function appendBubbleToStream(msg, isFirst = true, autoScroll = true) {
+            const row = document.createElement('div');
+            row.className = `bubble-row ${msg.fromMe ? 'outgoing' : 'incoming'}`;
+            row.id = `msg-row-${msg.id}`;
+
+            const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let mediaContent = '';
+
+            if (msg.media) {
+                mediaContent = renderMediaBlock(msg);
+            }
+
+            const showSenderName = !msg.fromMe && isFirst && msg.senderName && msg.senderName !== 'You';
+            const showTail = isFirst;
+
+            // Only show caption text if it is not a duplicate of generic placeholder
+            const textToDisplay = (msg.text && (!msg.media || (msg.text !== msg.media.type.toUpperCase() && !msg.text.startsWith('📷 [Photo]') && !msg.text.startsWith('🎥 [Video]') && !msg.text.startsWith('🎤 [Voice Note]') && !msg.text.startsWith('📄 [Document]'))))
+                ? msg.text
+                : (msg.media?.caption || '');
+
+            const isDeleted = Boolean(msg.isDeleted);
+            const deletedAlertHtml = isDeleted ? `
+                <div class="msg-deleted-alert">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <span>This message was deleted by sender (Preserved by Ghost Reader)</span>
+                </div>
+            ` : '';
+
+            row.innerHTML = `
+                <div class="message-bubble ${isDeleted ? 'bubble-deleted' : ''}">
+                    ${showTail ? (msg.fromMe ? tailOutgoingSVG : tailIncomingSVG) : ''}
+                    ${showSenderName ? `<div class="msg-sender-name">${escapeHtml(msg.senderName)}</div>` : ''}
+                    ${deletedAlertHtml}
+                    ${mediaContent}
+                    ${textToDisplay ? `<div class="msg-text-content">${escapeHtml(textToDisplay)}</div>` : ''}
+                    <div class="msg-meta-row">
+                        <span>${timeStr}</span>
+                        ${msg.fromMe ? doubleGreyTickSVG : ''}
+                    </div>
+                </div>
+            `;
+
+            messagesContainer.appendChild(row);
+            if (autoScroll) {
+                scrollToBottom();
+            }
+        }
+
+        // Build Media Block HTML
+        function renderMediaBlock(msg) {
+            const m = msg.media;
+            const isDownloaded = Boolean(m.downloaded);
+            const mediaUrl = m.url || `/api/media/${msg.id}`;
+
+            if (m.type === 'image') {
+                if (isDownloaded) {
+                    return `
+                        <div class="media-container photo-card-wrap" onclick="openLightbox('${mediaUrl}', '${escapeHtml(msg.senderName || '')}')">
+                            <img src="${mediaUrl}" alt="Photo" loading="lazy" onerror="handleMediaLoadError(this, '${msg.id}', '${msg.jid}', ${msg.fromMe})">
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="media-container media-download-placeholder" id="media-placeholder-${msg.id}">
+                            <div class="placeholder-icon">📷</div>
+                            <div class="placeholder-label">Photo (${m.caption ? escapeHtml(m.caption) : 'Untracked'})</div>
+                            <button class="btn-download-media" onclick="requestMediaDownload('${msg.id}', '${msg.jid}', ${msg.fromMe})">
+                                📥 Download Photo from Phone
+                            </button>
+                        </div>
+                    `;
+                }
+            } else if (m.type === 'video') {
+                if (isDownloaded) {
+                    return `
+                        <div class="media-container video-card-wrap">
+                            <video src="${mediaUrl}" controls playsinline poster="${m.thumbnail || ''}"></video>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="media-container media-download-placeholder" id="media-placeholder-${msg.id}">
+                            <div class="placeholder-icon">🎥</div>
+                            <div class="placeholder-label">Video ${m.seconds ? `(${m.seconds}s)` : ''}</div>
+                            <button class="btn-download-media" onclick="requestMediaDownload('${msg.id}', '${msg.jid}', ${msg.fromMe})">
+                                📥 Download Video from Phone
+                            </button>
+                        </div>
+                    `;
+                }
+            } else if (m.type === 'audio') {
+                if (isDownloaded) {
+                    return `
+                        <div class="media-container audio-player-card" id="audio-card-${msg.id}">
+                            <div class="audio-avatar">
+                                🎙️
+                                <div class="mic-badge">✓</div>
+                            </div>
+                            <button class="btn-audio-play" onclick="toggleAudioPlayback('${msg.id}', '${mediaUrl}')">
+                                <svg viewBox="0 0 24 24" id="play-icon-${msg.id}"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <div class="audio-wave-wrap">
+                                <div class="audio-wave-bars">
+                                    ${renderWaveBars()}
+                                </div>
+                                <div class="audio-time-row">
+                                    <span id="audio-time-${msg.id}">0:00</span>
+                                    <span>${m.seconds ? formatSeconds(m.seconds) : 'Audio'}</span>
+                                </div>
+                            </div>
+                            <audio id="audio-el-${msg.id}" src="${mediaUrl}" ontimeupdate="updateAudioProgress('${msg.id}')" onended="audioEnded('${msg.id}')"></audio>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="media-container media-download-placeholder" id="media-placeholder-${msg.id}">
+                            <div class="placeholder-icon">🎤</div>
+                            <div class="placeholder-label">Voice Note ${m.seconds ? `(${m.seconds}s)` : ''}</div>
+                            <button class="btn-download-media" onclick="requestMediaDownload('${msg.id}', '${msg.jid}', ${msg.fromMe})">
+                                📥 Download Audio from Phone
+                            </button>
+                        </div>
+                    `;
+                }
+            } else if (m.type === 'document') {
+                const filename = m.fileName || 'Document';
+                const ext = filename.split('.').pop().toLowerCase();
+                const iconClass = (ext === 'doc' || ext === 'docx') ? 'word' : ((ext === 'xls' || ext === 'xlsx') ? 'excel' : (ext === 'pdf' ? '' : 'generic'));
+
+                return `
+                    <div class="media-container doc-card">
+                        <div class="doc-icon-wrap ${iconClass}">${ext.toUpperCase() || 'FILE'}</div>
+                        <div class="doc-info">
+                            <div class="doc-filename">${escapeHtml(filename)}</div>
+                            <div class="doc-sub">${isDownloaded ? 'Downloaded file' : 'On primary phone'}</div>
+                        </div>
+                        ${isDownloaded ? `
+                            <a href="${mediaUrl}" download="${escapeHtml(filename)}" class="btn-doc-download" title="Download Document">
+                                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            </a>
+                        ` : `
+                            <button class="btn-doc-download" onclick="requestMediaDownload('${msg.id}', '${msg.jid}', ${msg.fromMe})" title="Request from phone">
+                                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            </button>
+                        `}
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function renderWaveBars() {
+            const heights = [10, 16, 22, 14, 18, 24, 12, 18, 22, 16, 20, 14, 12, 22, 18, 14, 10, 16, 20, 14];
+            return heights.map(h => `<div class="wave-bar" style="height: ${h}px;"></div>`).join('');
+        }
+
+        function formatSeconds(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Audio controls
+        function toggleAudioPlayback(id, url) {
+            const audio = document.getElementById(`audio-el-${id}`);
+            const icon = document.getElementById(`play-icon-${id}`);
+            if (!audio) return;
+
+            if (currentlyPlayingAudio && currentlyPlayingAudio !== audio) {
+                currentlyPlayingAudio.pause();
+            }
+
+            if (audio.paused) {
+                audio.play();
+                currentlyPlayingAudio = audio;
+                icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            } else {
+                audio.pause();
+                icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        function updateAudioProgress(id) {
+            const audio = document.getElementById(`audio-el-${id}`);
+            const timeSpan = document.getElementById(`audio-time-${id}`);
+            if (!audio || !timeSpan) return;
+
+            timeSpan.textContent = formatSeconds(audio.currentTime);
+
+            const card = document.getElementById(`audio-card-${id}`);
+            if (card) {
+                const bars = card.querySelectorAll('.wave-bar');
+                const progress = audio.currentTime / (audio.duration || 1);
+                const playedBars = Math.floor(progress * bars.length);
+                bars.forEach((b, idx) => {
+                    b.classList.toggle('played', idx <= playedBars);
+                });
+            }
+        }
+
+        function audioEnded(id) {
+            const icon = document.getElementById(`play-icon-${id}`);
+            if (icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            const card = document.getElementById(`audio-card-${id}`);
+            if (card) {
+                card.querySelectorAll('.wave-bar').forEach(b => b.classList.remove('played'));
+            }
+        }
+
+        // On-demand media downloader
+        async function requestMediaDownload(id, jid, fromMe) {
+            const placeholder = document.getElementById(`media-placeholder-${id}`);
+            if (placeholder) {
+                placeholder.innerHTML = `
+                    <div class="placeholder-icon">⏳</div>
+                    <div class="placeholder-label">Requesting media from phone...</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">WhatsApp will transfer media payload shortly.</div>
+                `;
+            }
+
+            try {
+                const res = await apiFetch('/api/media/request-download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, jid, fromMe })
+                });
+                const data = await res.json();
+                console.log('Media request response:', data);
+            } catch (err) {
+                console.error('Error requesting media:', err);
+                if (placeholder) {
+                    placeholder.innerHTML += `<div style="color: #ea4335; font-size: 11px;">Error connecting to phone.</div>`;
+                }
+            }
+        }
+
+        function handleMediaLoadError(imgEl, id, jid, fromMe) {
+            if (imgEl.dataset.retried) return;
+            imgEl.dataset.retried = '1';
+            const parent = imgEl.parentElement;
+            if (parent) {
+                parent.innerHTML = `
+                    <div class="media-download-placeholder" id="media-placeholder-${id}">
+                        <div class="placeholder-icon">📷</div>
+                        <div class="placeholder-label">Tap to load image from phone</div>
+                        <button class="btn-download-media" onclick="requestMediaDownload('${id}', '${jid}', ${fromMe})">
+                            📥 Download Photo
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function handleMediaReady(data) {
+            console.log('[WebSocket] Media ready on disk:', data);
+            if (currentSelectedJid && (currentSelectedJid === data.jid || currentSelectedJid.includes(data.jid.split('@')[0]))) {
+                fetchMessagesForCurrentChat(false);
+            }
+        }
+
+        // Request older messages from phone
+        async function requestOlderMessagesFromPhone(showAlert = true) {
+            if (!currentSelectedJid) return;
+            const btn = document.getElementById('btn-fetch-older-header');
+            if (btn) btn.innerHTML = `⏳ Requesting...`;
+
+            try {
+                const res = await apiFetch('/api/chats/fetch-history', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jid: currentSelectedJid })
+                });
+                const result = await res.json();
+                if (showAlert) {
+                    alert('Older messages requested from your primary phone! WhatsApp is syncing them now.');
+                }
+            } catch (e) {
+                console.error('History request error:', e);
+            } finally {
+                if (btn) btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Fetch Older Messages`;
+            }
+        }
+
+        // Lightbox
+        function openLightbox(url, senderName) {
+            lightboxImg.src = url;
+            lightboxTitle.textContent = senderName ? `Sent by ${senderName}` : 'Photo Preview';
+            lightboxSubtitle.textContent = 'WhatsApp Ghost Viewer • High Resolution';
+            lightboxDownloadLink.href = url;
+            lightboxModal.style.display = 'flex';
+        }
+
+        function closeLightbox(event) {
+            if (event && event.target && event.target.tagName === 'IMG') return;
+            lightboxModal.style.display = 'none';
+            lightboxImg.src = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightboxModal.style.display === 'flex') {
+                closeLightbox();
+            }
+        });
+
+        // Scroll handlers
+        function handleMessagesScroll() {
+            const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop <= messagesContainer.clientHeight + 120;
+            scrollDownBtn.style.display = atBottom ? 'none' : 'flex';
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            scrollDownBtn.style.display = 'none';
+        }
+
+        function handleIncomingLiveMessage(msg) {
+            fetchChats();
+            if (currentSelectedJid && (currentSelectedJid === msg.jid || currentSelectedJid === msg.canonicalJid)) {
+                appendBubbleToStream(msg, true, true);
+            }
+        }
+
+        async function logoutSession() {
+            if (confirm(`Disconnect WhatsApp session "${currentSessionMeta.name}" from Ghost Reader? You will need to scan QR code again to reconnect.`)) {
+                await apiFetch('/api/logout', { method: 'POST' });
+                window.location.reload();
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // ================= AUTH PORTAL CONTROLLER =================
+        async function initAuthGatekeeper() {
+            try {
+                const res = await fetch('/api/auth/status');
+                const status = await res.json();
+                authIsInitialized = status.initialized;
+
+                if (!authIsInitialized) {
+                    // First-time setup: Master Admin account required
+                    showAuthModal(null, 'setup');
+                    return false;
+                }
+
+                if (currentUserToken) {
+                    // Verify token with backend
+                    const meRes = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${currentUserToken}` }
+                    });
+                    if (meRes.ok) {
+                        const meData = await meRes.json();
+                        applyAuthSuccess(meData.user, currentUserToken);
+                        return true;
+                    } else {
+                        // Token invalid/expired
+                        localStorage.removeItem('ghost_auth_token');
+                        currentUserToken = null;
+                    }
+                }
+
+                // If not authenticated, show login form
+                showAuthModal(null, 'login');
+                return false;
+            } catch (err) {
+                console.error('[Auth] Init error:', err);
+                showAuthModal('Failed to connect to authentication service.');
+                return false;
+            }
+        }
+
+        function showAuthModal(errorMsg = null, mode = 'login') {
+            document.getElementById('auth-portal-overlay').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+
+            if (errorMsg) {
+                const alertEl = document.getElementById('auth-error-alert');
+                alertEl.textContent = errorMsg;
+                alertEl.style.display = 'block';
+            } else {
+                document.getElementById('auth-error-alert').style.display = 'none';
+            }
+
+            switchAuthTab(mode);
+        }
+
+        function hideAuthModal() {
+            document.getElementById('auth-portal-overlay').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const titleEl = document.getElementById('auth-title');
+            const subtitleEl = document.getElementById('auth-subtitle');
+            const tabsRow = document.getElementById('auth-tabs-row');
+            const tabLogin = document.getElementById('auth-tab-login');
+            const tabRegister = document.getElementById('auth-tab-register');
+            const groupName = document.getElementById('auth-group-name');
+            const groupConfirmPwd = document.getElementById('auth-group-confirm-pwd');
+            const btnText = document.getElementById('auth-btn-text');
+            const alertEl = document.getElementById('auth-error-alert');
+            alertEl.style.display = 'none';
+
+            if (mode === 'setup') {
+                tabsRow.style.display = 'none';
+                groupName.style.display = 'block';
+                groupConfirmPwd.style.display = 'block';
+                titleEl.textContent = '👑 Set Up Master Admin';
+                subtitleEl.textContent = 'Create your owner account to secure WhatsApp Ghost';
+                btnText.textContent = 'Create Master Account & Unlock';
+            } else if (mode === 'register') {
+                tabsRow.style.display = 'flex';
+                tabLogin.classList.remove('active');
+                tabRegister.classList.add('active');
+                groupName.style.display = 'block';
+                groupConfirmPwd.style.display = 'block';
+                titleEl.textContent = '✨ Create Account';
+                subtitleEl.textContent = 'Get your own private WhatsApp Ghost session';
+                btnText.textContent = 'Create Account & Connect';
+            } else { // 'login'
+                tabsRow.style.display = 'flex';
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                groupName.style.display = 'none';
+                groupConfirmPwd.style.display = 'none';
+                titleEl.textContent = 'WhatsApp Ghost Portal';
+                subtitleEl.textContent = 'Encrypted stealth client • Zero seen receipts';
+                btnText.textContent = 'Sign In';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('auth-input-password');
+            const confirmInput = document.getElementById('auth-input-confirm-pwd');
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            if (confirmInput) confirmInput.type = isPassword ? 'text' : 'password';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('auth-input-username');
+            const pwdInput = document.getElementById('auth-input-password');
+            const nameInput = document.getElementById('auth-input-name');
+            const confirmInput = document.getElementById('auth-input-confirm-pwd');
+            const alertEl = document.getElementById('auth-error-alert');
+            const submitBtn = document.getElementById('auth-submit-btn');
+
+            alertEl.style.display = 'none';
+
+            const username = usernameInput.value.trim();
+            const password = pwdInput.value;
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            if (currentAuthMode === 'setup' || currentAuthMode === 'register') {
+                const confirmPwd = confirmInput.value;
+                if (password !== confirmPwd) {
+                    alertEl.textContent = 'Passwords do not match.';
+                    alertEl.style.display = 'block';
+                    return;
+                }
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
+
+            try {
+                let res;
+                if (currentAuthMode === 'setup' || currentAuthMode === 'register') {
+                    res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, name })
+                    });
+                } else {
+                    res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                }
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Authentication failed');
+                }
+
+                // Authentication Succeeded!
+                applyAuthSuccess(data.user, data.token);
+                showToast(currentAuthMode === 'setup' ? 'Master Admin Created!' : `Welcome, ${data.user.name || data.user.username}!`);
+                
+                // Initialize WhatsApp client
+                connectWebSocket();
+                fetchStatusAndChats();
+            } catch (err) {
+                alertEl.textContent = err.message;
+                alertEl.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        function applyAuthSuccess(user, token) {
+            currentAuthUser = user;
+            currentUserToken = token;
+            localStorage.setItem('ghost_auth_token', token);
+
+            // Set user's session
+            if (user.sessionId) {
+                currentSessionId = user.sessionId;
+                localStorage.setItem('ghost_session_id', currentSessionId);
+            }
+
+            // Update UI User Pill
+            const usernameEl = document.getElementById('auth-pill-username');
+            const roleEl = document.getElementById('auth-pill-role');
+            const headerSub = document.getElementById('header-user-status');
+
+            if (usernameEl) usernameEl.textContent = '@' + user.username;
+            if (roleEl) {
+                roleEl.textContent = user.role.toUpperCase();
+                roleEl.style.color = user.role === 'admin' ? '#00d7a0' : '#8696a0';
+            }
+            if (headerSub) {
+                headerSub.textContent = `${user.name || user.username} (${user.role.toUpperCase()}) • Stealth Active`;
+            }
+
+            hideAuthModal();
+        }
+
+        async function handleAuthLogout() {
+            if (confirm('Are you sure you want to log out of WhatsApp Ghost? The portal will be locked.')) {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${currentUserToken}` }
+                    });
+                } catch (_) {}
+
+                localStorage.removeItem('ghost_auth_token');
+                currentUserToken = null;
+                currentAuthUser = null;
+                if (ws) {
+                    try { ws.close(); } catch (_) {}
+                }
+                showAuthModal('You have been logged out.', 'login');
+            }
+        }
+
+        // ================= PWA INSTALLATION ENGINE =================
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const pwaBtn = document.getElementById('btn-install-pwa');
+            const pwaBtnQr = document.getElementById('btn-install-pwa-qr');
+            if (pwaBtn) pwaBtn.style.display = 'inline-flex';
+            if (pwaBtnQr) pwaBtnQr.style.display = 'inline-flex';
+        });
+
+        async function installPwaApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('🎉 WhatsApp Ghost installed to your device!');
+                }
+                deferredPrompt = null;
+                const pwaBtn = document.getElementById('btn-install-pwa');
+                const pwaBtnQr = document.getElementById('btn-install-pwa-qr');
+                if (pwaBtn) pwaBtn.style.display = 'none';
+                if (pwaBtnQr) pwaBtnQr.style.display = 'none';
+            } else {
+                showToast('📱 To install: Tap Browser Menu (⋮ or Share) > "Add to Home Screen"');
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+            });
+        }
+
+        // Initialize Multi-Tenant Ghost Suite with Gatekeeper Auth
+        initAuthGatekeeper().then((isAuthenticated) => {
+            if (isAuthenticated) {
+                connectWebSocket();
+                fetchStatusAndChats();
+            }
+        });
+    </script>
+</body>
+</html>

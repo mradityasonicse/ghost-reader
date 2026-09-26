@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111b21"/>
+      <stop offset="100%" stop-color="#0c1317"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d7a0"/>
+      <stop offset="100%" stop-color="#00a884"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#00a884" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  
+  <!-- App Icon Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+  
+  <!-- Glowing WhatsApp Ring -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#greenGrad)" stroke-width="12" filter="url(#glow)"/>
+  
+  <!-- Ghost Body Shape -->
+  <path d="M 256 140 
+           C 190 140 160 190 160 250 
+           C 160 330 160 360 180 350 
+           C 195 342 205 340 220 355 
+           C 235 370 245 370 256 355 
+           C 267 370 277 370 292 355 
+           C 307 340 317 342 332 350 
+           C 352 360 352 330 352 250 
+           C 352 190 322 140 256 140 Z" 
+        fill="#e9edef"/>
+        
+  <!-- Ghost Big Eyes -->
+  <ellipse cx="225" cy="235" rx="18" ry="24" fill="#111b21"/>
+  <ellipse cx="287" cy="235" rx="18" ry="24" fill="#111b21"/>
+  
+  <!-- Eye Highlights -->
+  <circle cx="230" cy="226" r="7" fill="#00a884"/>
+  <circle cx="292" cy="226" r="7" fill="#00a884"/>
+  <circle cx="222" cy="242" r="3" fill="#ffffff"/>
+  <circle cx="284" cy="242" r="3" fill="#ffffff"/>
+  
+  <!-- Stealth Double Grey Ticks at bottom -->
+  <g transform="translate(216, 385) scale(1.4)">
+    <path d="M0.5 8.5 L4.5 12.5 L12.5 4.5" fill="none" stroke="#8696a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M5.5 8.5 L9.5 12.5 L17.5 4.5" fill="none" stroke="#8696a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
